@@ -1,0 +1,23 @@
+chat:
+  quick_prompts:
+    estimation-agent:
+      - "What can you estimate?"
+      - "Can you estimate SAP implementation for FI,SD,MM for 100 programs, 200 reports, 150 interfaces, 20 workflows, 100 enhancements, 50 conversions?"
+      - "Tell me about our active marketing campaigns"
+    solutioning-team:
+      - "Can you estimate SAP implementation for FI,SD,MM for 100 programs, 200 reports, 150 interfaces, 20 workflows, 100 enhancements, 50 conversions?"
+      - "Can you please create resource plan for above"
+      - "Can you please create resource plan for 10month SAP implemenation with 80 person months"
+team:
+    estimation-agent:
+      - "Who are team members?"
+      - "Can you implement SAP implementation for FI,SD,MM for 100 programs, 200 reports, 150 interfaces, 20 workflows, 100 enhancements, 50 conversions?"
+      - "Tell me about our active sales campaigns"
+memory:
+  dbs:
+    - db_id: dafault
+      domain_config:
+        display_name: Main app user memories
+    # - db_id: db-0002
+    #   domain_config:
+    #     display_name: Support flow user memories

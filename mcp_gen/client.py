@@ -56,6 +56,7 @@ class MCPClient:
         mcp_tools = await self.session.list_tools()
 
         tools = mcp_tools_to_tools(mcp_tools)
+        tools=[]
 
         config = types.GenerateContentConfig(temperature= 0, tools= tools)#[self.session])#
 
@@ -150,37 +151,41 @@ class MCPClient:
             await self._streams_context.__aexit__(None, None, None)  # pylint: disable=E1101
 
 def mcp_tools_to_tools(mcp_tools):
+    print(mcp_tools.tools)
     return [
-    types.Tool(
-        function_declarations=[
-        {
-            "name": tool.name,
-            "description": tool.description,
-            "parameters": {
-            k: v
-            for k, v in tool.inputSchema.items()
-            if k not in ["additionalProperties", "$schema"]
-            },
-        }
-        ]
-    )
-    for tool in mcp_tools.tools
-]
+        types.Tool(
+            function_declarations=[
+            {
+                "name": tool.name,
+                "description": tool.description,
+                "parameters": {k: v for k, v in tool.inputSchema.items()
+                    if k not in ["additionalProperties", "additional_properties", "$schema"]
+                },
+            }
+            ]
+        )
+        for tool in mcp_tools.tools
+    ]
 
 
 async def main():
     """Main function to run the MCP client"""
     parser = argparse.ArgumentParser(description="Run MCP Streamable http based Client")
     parser.add_argument(
-        "--mcp-localhost-port", type=int, default=8123, help="Localhost port to bind to"
+        "--mcp-port", type=int, default=8123, help="Localhost port to bind to"
+    )
+    parser.add_argument(
+        "--mcp-host", type=str, default="http://localhost", help="MCP server"
     )
     args = parser.parse_args()
 
     client = MCPClient()
 
     try:
+        server_url=f"{args.mcp_host}{':'+args.mcp_port if args.mcp_port != 80 else '' }/mcp"
+        print(server_url)
         await client.connect_to_streamable_http_server(
-            f"http://localhost:{args.mcp_localhost_port}/mcp"
+            server_url
         )
         await client.chat_loop()
     finally:

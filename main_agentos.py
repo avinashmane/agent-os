@@ -9,11 +9,21 @@ from agno.tools.user_control_flow import UserControlFlowTools
 from agno.knowledge.knowledge import Knowledge
 from agno.os import AgentOS
 from copy import copy
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Setup the database
 from lib import get_db, get_vector_db, get_model
 from agents import create_basic_agents
 from agents.know_agent import rag_agent, knowledge as know_1
+
+WHITELIST_HOSTS='https://os.agno.com/ https://os.agno.com http://localhost http://127.0.0.1:5173 http://localhost:5173'.split()
 
 agents={}
 basic_agents = create_basic_agents("agents/basic_agents.yaml")
@@ -77,7 +87,7 @@ rom_solutioning_team = Team(
     ],
     add_session_state_to_context=True,
     enable_agentic_state=True,
-    tools=[save_resource_plan,UserControlFlowTools()],
+    tools=[save_resource_plan, UserControlFlowTools()],
     # external_execution=True ,
     db=get_db(),
     members=basic_agents.values(),
@@ -92,16 +102,47 @@ config_file_path = f"{os.path.dirname(__file__)}/agentos_config.yaml"
 
 from agents.demo_agent_state import agent as state_agent
 from agents.demo_imagegen import image_agent
+
+# Create your custom FastAPI app
+app = FastAPI(title="My Custom App")
+
+# Add your custom routes
+@app.get("/status")
+async def status_check():
+    return {"status": "healthy"}
+
+
 agent_os = AgentOS(
-    os_id="my-Solutioning-os",
+    id="my-Solutioning-os",
     description="My Solutioning AgentOS",
+    # base_app=app,  # Your custom FastAPI app
     teams=[sol_team, rom_solutioning_team],
     # workflows=[workflow],
+    # enable_mcp_server=True,
     agents=[image_agent, state_agent,*agents.values()],
-    config=config_file_path,
+    config=config_file_path
+
 )
 
 app = agent_os.get_app()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins= WHITELIST_HOSTS ,# ["*"],  # Allows all origins
+#    allow_origins= 'https.*' ,
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all methods
+    allow_headers=["*"],  # Allows all headers
+)
+
+class LogRequestHeadersMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        logger.info(f"Incoming Request Headers: {request.headers}")
+        response = await call_next(request)
+        return response
+
+app.add_middleware(LogRequestHeadersMiddleware)
+
 
 if __name__ == "__main__":
     # Default port is 7777; change with port=...

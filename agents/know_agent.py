@@ -2,7 +2,7 @@ from agno.knowledge.knowledge import Knowledge
 from agno.db.postgres import PostgresDb
 from agno.vectordb.pgvector import PgVector
 from agno.agent import Agent
-
+from agno.tools.user_control_flow import UserControlFlowTools
 from lib import get_db, model, get_vector_db
 from box import Box
 
@@ -30,5 +30,6 @@ knowledge = Knowledge(
 rag_agent = Agent(
     model=model,
     name="Knowledge Agent",
-    knowledge=knowledge
+    knowledge=knowledge,
+    tools=[UserControlFlowTools()],
 )

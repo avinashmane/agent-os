@@ -12,8 +12,13 @@ instructions:
 - you should focus on services estimation, which will results in person hours
 
 """)
-with open(f"{env('ROOT')}/instructions/resourcing_guidance.md", "r") as f:
-    guidelines = f.read()
+# with open(f"{env('ROOT')}/instructions/resourcing_guidance.md", "r") as f:
+#     guidelines = f.read()
+
+from lib.text_utils import get_text
+
+guidelines = get_text(f"{env('ROOT')}/instructions/resourcing_guidance.md")
+
 
 def create_mcp_agent(model,
                      transport="streamable-http",

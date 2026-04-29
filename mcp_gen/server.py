@@ -16,6 +16,34 @@ NGROK_AUTH_TOKEN = getenv("NGROK_AUTH_TOKEN", "")
 
 
 
+security_settings=TransportSecuritySettings(allowed_hosts=["*","firm-swan-prompt.ngrok-free.app", "localhost:8123", "localhost"])
+
+mcp = FastMCP(name="weather", 
+                json_response=False, stateless_http=False, 
+                transport_security=security_settings)# lifespan=lifespan)
+
+try:
+    from mcp_gen import weather
+    from mcp_gen import staffing
+except ImportError:
+    import weather
+    import staffing
+
+weather.register(mcp)
+staffing.register(mcp)
+
+@mcp.tool()
+async def get_duration(efforts: float, est_type: str) -> float:
+    """Get duration of the project based on efforts.
+
+    Args:
+        efforts: efforts in person months
+        est_type: Esitmation type. CS for implementation and AMS for support
+    """
+    from math import sqrt
+    factor=1.1
+    return round(sqrt(efforts)/factor,0)
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run MCP Streamable HTTP based server")
     parser.add_argument("--port", type=int, default=8123, help="Localhost port to listen on")
@@ -33,32 +61,6 @@ if __name__ == "__main__":
         logger.info("Tearing Down ngrok Endpoint")
         ngrok.disconnect()
 
-    # Initialize FastMCP server for Weather tools.
-    # If json_response is set to True, the server will use JSON responses instead of SSE streams
-    # If stateless_http is set to True, the server uses true stateless mode (new transport per request)
-    security_settings=TransportSecuritySettings(allowed_hosts=["*","firm-swan-prompt.ngrok-free.app", "localhost:8123", "localhost"])
-
-    mcp = FastMCP(name="weather", json_response=False, stateless_http=False, transport_security=security_settings)# lifespan=lifespan)
-
-    
-    import weather
-
-    weather.register(mcp)
-
-    import staffing
-    staffing.register(mcp)
-
-    @mcp.tool()
-    async def get_duration(efforts: float, est_type: str) -> float:
-        """Get duration of the project based on efforts.
-
-        Args:
-            efforts: efforts in person months
-            est_type: Esitmation type. CS for implementation and AMS for support
-        """
-        from math import sqrt
-        factor=1.1
-        return round(sqrt(efforts)/factor,0)
 
     from starlette.applications import Starlette
     from starlette.routing import Mount, Route

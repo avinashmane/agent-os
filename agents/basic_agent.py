@@ -1,12 +1,15 @@
 from agno.agent.agent import Agent
 from agno.tools.user_control_flow import UserControlFlowTools
+import os
 from dotenv import load_dotenv
-load_dotenv()
+load_dotenv(os.path.join(os.path.dirname(__file__), "../../.env"))
 from lib.model import get_model
 import yaml
 from box import box_from_file
 import os
 from lib import  get_db
+from lib.text_utils import get_text
+
 
 db=get_db()
 
@@ -18,8 +21,8 @@ def create_basic_agents(file_name,
             debug_mode=True):
     # with open(file_name, "r") as f:
     #     agent_data = yaml.safe_load(f.read())
-    instruction_path=f"{os.path.dirname(__file__)}/../instructions"
-    agent_data=box_from_file(f"{os.getenv('AGENTS_DIR',".")}/{file_name}")
+
+    agent_data=box_from_file(f"{os.getenv('AGENTS_DIR', '.')}/{file_name}")
 
     agents={}
 
@@ -30,10 +33,10 @@ def create_basic_agents(file_name,
         agent_description = agent_info.get('persona')+"\n\n\nyou goal is:\n"+agent_info.get('goals', "")
         expected_output=agent_data.get("expected_output" , None)
 
-        inst_path = f"{instruction_path}/{agent_info.get('instructions', None)}"
+        instruction_path=f"{os.getenv('ROOT')}/instructions"
 
-        with open(inst_path, "r") as f:
-            agent_instructions = f.read()
+        inst_path = f"{instruction_path}/{agent_info.get('instructions', None)}"
+        agent_instructions = get_text(inst_path)
 
         agents[agent_id] = Agent(
             name=name,

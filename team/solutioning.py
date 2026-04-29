@@ -15,6 +15,11 @@ sol_team = Team(
     name="Solution Team",
     model=get_model(),
     enable_agentic_state=True,
-    tools=[UserControlFlowTools()],
+    session_state="sol_state",
+    add_session_state_to_context=True,
+    tools=[],#UserControlFlowTools()
     db=get_db(),
-    members=team_agents.values())
+    members=list(team_agents.values()),
+    debug_mode = True,
+    add_history_to_context =  True,
+    )

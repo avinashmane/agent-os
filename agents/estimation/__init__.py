@@ -1,8 +1,9 @@
 from agno.agent.agent import Agent
 from agno.knowledge.knowledge import Knowledge
 from agno.tools.user_control_flow import UserControlFlowTools
+import os
 from dotenv import load_dotenv
-load_dotenv()
+load_dotenv(os.path.join(os.path.dirname(__file__), "../../../.env"))
 from lib import get_model, env
 from lib import get_db, get_vector_db
 from box import Box
@@ -36,7 +37,7 @@ chat_agent = Agent(
         "Provide clear prompts and instructions for user responses",
     ],
     additional_context=guidelines,
-    tools=[UserControlFlowTools()],
+    tools=[],#UserControlFlowTools()
     # knowledge=Knowledge(contents_db=off_db,
     #                     vector_db=get_vector_db(table_name="vectors")),
     # search_knowledge=True,    

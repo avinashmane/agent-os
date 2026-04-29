@@ -11,7 +11,7 @@ import os
 from agno.models.google import Gemini
 
 db = PostgresDb(
-    db_url="postgresql+psycopg://ai:ai@localhost:5532/ai",
+    db_url=os.getenv("DB_URL"),
     knowledge_table="knowledge_contents",
 )
 
@@ -21,7 +21,7 @@ knowledge = Knowledge(
     description="Agno 2.0 Knowledge Implementation",
     contents_db=db,
     vector_db=PgVector(
-        table_name="vectors", db_url="postgresql+psycopg://ai:ai@localhost:5532/ai",
+        table_name="vectors", db_url=os.getenv("DB_URL"),
         embedder=GeminiEmbedder()
         
     ),

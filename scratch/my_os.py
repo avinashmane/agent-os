@@ -11,7 +11,7 @@ import os
 model = Gemini(id=os.environ.get("MODEL", "gemini-2.0-flash-001"))
 
 # Setup the database
-db = PostgresDb(db_url="postgresql+psycopg://ai:ai@localhost:5532/ai")
+db = PostgresDb(db_url=os.getenv("DB_URL"))
 
 
 def create_mcp_agent(model):

@@ -1,6 +1,6 @@
-from dotenv import load_dotenv
-load_dotenv()
 import os
+from dotenv import load_dotenv
+load_dotenv(os.path.join(os.path.dirname(__file__), '../.env'))
 from agno.team import Team
 from agno.workflow import Step, Workflow, StepOutput
 from agno.tools.duckduckgo import DuckDuckGoTools
@@ -90,7 +90,7 @@ rom_solutioning_team = Team(
     tools=[save_resource_plan, UserControlFlowTools()],
     # external_execution=True ,
     db=get_db(),
-    members=basic_agents.values(),
+    members=list(basic_agents.values()),
     add_history_to_context=True,
     num_history_runs=3,
     )

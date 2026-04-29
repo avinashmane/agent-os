@@ -12,7 +12,7 @@ vector_table: vectors
 """)
 
 # Setup the database
-db_url="postgresql+psycopg://ai:ai@localhost:5532/ai"
+db_url=os.getenv("DB_URL")
 
 # ContentsDB is required for AgentOS Knowledge page
 contents_db = get_db(
@@ -31,5 +31,5 @@ rag_agent = Agent(
     model=model,
     name="Knowledge Agent",
     knowledge=knowledge,
-    tools=[UserControlFlowTools()],
+    tools=[], #UserControlFlowTools()
 )

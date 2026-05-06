@@ -1,6 +1,5 @@
 import os
-from dotenv import load_dotenv
-load_dotenv(os.path.join(os.path.dirname(__file__), '../.env'))
+
 from agno.team import Team
 from agno.workflow import Step, Workflow, StepOutput
 from agno.tools.duckduckgo import DuckDuckGoTools
@@ -12,14 +11,9 @@ from copy import copy
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
-import logging
-
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 # Setup the database
-from lib import get_db, get_vector_db, get_model
+from lib import get_db, get_vector_db, get_model, logger
 from agents import create_basic_agents
 from agents.know_agent import rag_agent, knowledge as know_1
 
@@ -115,6 +109,7 @@ async def status_check():
 agent_os = AgentOS(
     id="my-Solutioning-os",
     description="My Solutioning AgentOS",
+    db=get_db(),
     # base_app=app,  # Your custom FastAPI app
     teams=[sol_team, rom_solutioning_team],
     # workflows=[workflow],
@@ -135,13 +130,13 @@ app.add_middleware(
     allow_headers=["*"],  # Allows all headers
 )
 
-class LogRequestHeadersMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request: Request, call_next):
-        logger.info(f"Incoming Request Headers: {request.headers}")
-        response = await call_next(request)
-        return response
+# class LogRequestHeadersMiddleware(BaseHTTPMiddleware):
+#     async def dispatch(self, request: Request, call_next):
+#         logger.info(f"Incoming Request Headers: {request.headers}")
+#         response = await call_next(request)
+#         return response
 
-app.add_middleware(LogRequestHeadersMiddleware)
+# app.add_middleware(LogRequestHeadersMiddleware)
 
 
 if __name__ == "__main__":

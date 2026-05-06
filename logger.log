@@ -1,0 +1,2 @@
+2026-05-07 02:50:59.490 | INFO     | lib:<module>:9 - loading env
+2026-05-07 02:50:59.753 | INFO     | lib.database:<module>:10 - Database URL: postgresql+psycopg://ai:ai@localhost:5532/ica

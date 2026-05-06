@@ -44,42 +44,46 @@ async def about():
 db_url=os.getenv("DB_URL")
 db = get_db()#PostgresDb(db_url=db_url)
 
-registry = Registry(
-    name="My Registry",
-    tools=[WebSearchTools(), YFinanceTools(),],
-    models=[get_model(),Ollama(id="lfm2.5-thinking:latest")],
-    dbs=[db], #Studio requires the `db` parameter to save and load agents, teams, and workflows.
-    
-)
 
 #------
+from schemas.solution import Solution
 
 #+++ agents local
-agent = Agent(
-    name="my-agent",
-    model=get_model(),#"google:gemini-2.0-flash",#OpenAIResponses(id="gpt-5.2"),
-    tools=[
-        YFinanceTools(),#stock_price=True, analyst_recommendations=True, company_info=True),
-    ],
-    description="You are an investment analyst that researches stock prices, analyst recommendations, and stock fundamentals.",
-    instructions="Format your response using markdown and use tables to display data where possible.",
-)
+from agents.finance import agent as finance_agent
 
 #+++ teams resources
 from team.solutioning import sol_team
 from tools.resources import save_resource_plan
 
+knowledgebases = [get_knowledge_base(x) for x in [
+ "offerings",
+ "past-solutions",
+ "jrs",
+ "product-catalog"
+]]
+
+registry = Registry(
+    name="My Registry",
+    tools=[WebSearchTools(), YFinanceTools(),],
+    models=[get_model(),Ollama(id="lfm2.5-thinking:latest")],
+    dbs=[db], #Studio requires the `db` parameter to save and load agents, teams, and workflows.
+    schemas=[Solution],
+    functions=[save_resource_plan]
+    
+)
 
 # agent OS with A2A
 agent_os = AgentOS(
     id="my-app",
     db=db,
     registry=registry,
-    agents=[agent],
+    agents=[finance_agent],
     teams=[sol_team],
+    knowledge=knowledgebases,
     a2a_interface=True,
-    base_app=app  ,
-    
+    base_app=app,
+    # enable_mcp_server=True,
+    run_hooks_in_background=False
 )
 app = agent_os.get_app()
 
@@ -92,56 +96,55 @@ def download_instruction(filename: str):
     raise HTTPException(status_code=404, detail="File not found")
 
 
+# # Mount MCP under /mcp-srv to avoid conflict with AgentOS internals
+# from mcp_gen.server import mcp
 
-# Mount MCP under /mcp-srv to avoid conflict with AgentOS internals
-from mcp_gen.server import mcp
-
-def map_mcp_on_fastapi_app(mcp,app):
-        ##++++++++ MCP start
-        from fastapi import FastAPI, Request
-        from mcp.server.sse import SseServerTransport
-        from starlette.routing import Mount
+# def map_mcp_on_fastapi_app(mcp,app):
+#         ##++++++++ MCP start
+#         from fastapi import FastAPI, Request
+#         from mcp.server.sse import SseServerTransport
+#         from starlette.routing import Mount
         
-        # Create SSE transport instance for handling server-sent events
-        sse = SseServerTransport("/messages/")
+#         # Create SSE transport instance for handling server-sent events
+#         sse = SseServerTransport("/messages/")
         
-        # Mount the /messages path to handle SSE message posting
-        app.router.routes.append(Mount("/messages", app=sse.handle_post_message))
+#         # Mount the /messages path to handle SSE message posting
+#         app.router.routes.append(Mount("/messages", app=sse.handle_post_message))
         
         
-        # Add documentation for the /messages endpoint
-        @app.post("/messages", tags=["MCP"], include_in_schema=True)
-        def messages_docs():
-            """
-            Messages endpoint for SSE communication
+#         # Add documentation for the /messages endpoint
+#         @app.post("/messages", tags=["MCP"], include_in_schema=True)
+#         def messages_docs():
+#             """
+#             Messages endpoint for SSE communication
         
-            This endpoint is used for posting messages to SSE clients.
-            Note: This route is for documentation purposes only.
-            The actual implementation is handled by the SSE transport.
-            """
-            pass  # This is just for documentation, the actual handler is mounted above
+#             This endpoint is used for posting messages to SSE clients.
+#             Note: This route is for documentation purposes only.
+#             The actual implementation is handled by the SSE transport.
+#             """
+#             pass  # This is just for documentation, the actual handler is mounted above
         
         
-        @app.get("/sse", tags=["MCP"])
-        async def handle_sse(request: Request):
-            """
-            SSE endpoint that connects to the MCP server
+#         @app.get("/sse", tags=["MCP"])
+#         async def handle_sse(request: Request):
+#             """
+#             SSE endpoint that connects to the MCP server
         
-            This endpoint establishes a Server-Sent Events connection with the client
-            and forwards communication to the Model Context Protocol server.
-            """
-            # Use sse.connect_sse to establish an SSE connection with the MCP server
-            async with sse.connect_sse(request.scope, request.receive, request._send) as (
-                read_stream,
-                write_stream,
-            ):
-                # Run the MCP server with the established streams
-                await mcp._mcp_server.run(
-                    read_stream,
-                    write_stream,
-                    mcp._mcp_server.create_initialization_options(),
-                )
-        pass 
+#             This endpoint establishes a Server-Sent Events connection with the client
+#             and forwards communication to the Model Context Protocol server.
+#             """
+#             # Use sse.connect_sse to establish an SSE connection with the MCP server
+#             async with sse.connect_sse(request.scope, request.receive, request._send) as (
+#                 read_stream,
+#                 write_stream,
+#             ):
+#                 # Run the MCP server with the established streams
+#                 await mcp._mcp_server.run(
+#                     read_stream,
+#                     write_stream,
+#                     mcp._mcp_server.create_initialization_options(),
+#                 )
+#         pass 
 
     
 if __name__ == "__main__":
@@ -180,24 +183,24 @@ if __name__ == "__main__":
     
     
     # map_mcp_on_fastapi_app(mcp,app)
-    from starlette.applications import Starlette
-    from starlette.routing import Mount
-    from starlette.middleware.trustedhost import TrustedHostMiddleware
+    # from starlette.applications import Starlette
+    # from starlette.routing import Mount
+    # from starlette.middleware.trustedhost import TrustedHostMiddleware
     
-    mcp_starlette_app = mcp.sse_app()
+    # # mcp_starlette_app = mcp.sse_app()
     
-    top_app = Starlette(
-        routes=[
-            Mount("/mcp", app=mcp_starlette_app),
-            Mount("/", app=app),
-        ]
-    )
-    top_app.add_middleware(TrustedHostMiddleware, allowed_hosts=["localhost", "firm-swan-prompt.ngrok-free.app"])
+    # top_app = Starlette(
+    #     routes=[
+    #         # Mount("/mcp", app=mcp_starlette_app),
+    #         Mount("/", app=app),
+    #     ]
+    # )
+    # top_app.add_middleware(TrustedHostMiddleware, allowed_hosts=["localhost", "firm-swan-prompt.ngrok-free.app"])
 
     ##--------- MCP end
     logger.info(f"Starting with at {args.host}:{args.port}", )
 
 
     # Start the server 
-    uvicorn.run( top_app, host=args.host, port=args.port,  )
+    uvicorn.run( app, host=args.host, port=args.port,  )
 

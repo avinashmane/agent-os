@@ -4,7 +4,7 @@ from agno.vectordb.pgvector import PgVector
 from agno.knowledge.knowledge import Knowledge
 from agno.knowledge.embedder.google import GeminiEmbedder
 
-db=None
+vector_db=None
 
 def get_vector_db(table_name="vectors"):
     db= PgVector(
@@ -14,12 +14,14 @@ def get_vector_db(table_name="vectors"):
     )
     return db
 
-def get_knowledge_base( name="My PG Vector Knowledge Base",
-    description="This is a knowledge base that uses a PG Vector DB",
+def get_knowledge_base( name    ,
+    description=None,
     vector_db=None):
 
+
     return Knowledge(
-    name=name,
-    description=description,
-    vector_db=vector_db if vector_db else get_vector_db(),
+        name=name,
+        description=description,
+        vector_db=vector_db if vector_db else get_vector_db(table_name=name),
+        contents_db=get_db(), #knowledge_table=name
 )

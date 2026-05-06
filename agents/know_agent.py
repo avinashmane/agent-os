@@ -5,6 +5,7 @@ from agno.agent import Agent
 from agno.tools.user_control_flow import UserControlFlowTools
 from lib import get_db, model, get_vector_db
 from box import Box
+import os
 
 cfg=Box.from_yaml("""
 knowledge_table: knowledge_table
